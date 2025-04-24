@@ -11,6 +11,7 @@ try {
   console.log('SQLite connected using better-sqlite3');
 } catch (err) {
   console.error('SQLite connection error:', err.message);
+  process.exit(1); // Exit the process if DB connection fails
 }
 
 module.exports = db;
