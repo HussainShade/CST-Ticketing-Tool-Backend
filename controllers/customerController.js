@@ -8,16 +8,20 @@ exports.addCustomer = (req, res) => {
     postal_code, district, state, customer_type, customer_category
   } = req.body;
 
-  db.run(`INSERT INTO customers (
-    customer_id, name, address, city, postal_code, district, state,
-    phone_number, email, contact_person, customer_type, customer_category
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, name, address, city, postal_code, district, state, phone_number,
-      email, contact_person, customer_type, customer_category],
-    err => {
-      if (err) return res.status(500).json({ message: 'Insert failed' });
-      res.status(201).json({ customer_id: id });
-    });
+  try {
+    const stmt = db.prepare(`INSERT INTO customers (
+      customer_id, name, address, city, postal_code, district, state,
+      phone_number, email, contact_person, customer_type, customer_category
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    
+    stmt.run(id, name, address, city, postal_code, district, state,
+      phone_number, email, contact_person, customer_type, customer_category);
+    
+    res.status(201).json({ customer_id: id });
+  } catch (err) {
+    console.error('Insert error:', err.message);
+    res.status(500).json({ message: 'Insert failed' });
+  }
 };
 
 exports.editCustomer = (req, res) => {
@@ -27,28 +31,44 @@ exports.editCustomer = (req, res) => {
     postal_code, district, state, customer_type, customer_category
   } = req.body;
 
-  db.run(`UPDATE customers SET name=?, address=?, city=?, postal_code=?, district=?,
-          state=?, phone_number=?, email=?, contact_person=?, customer_type=?, customer_category=?
-          WHERE customer_id=?`,
-    [name, address, city, postal_code, district, state, phone_number, email, contact_person,
-      customer_type, customer_category, id],
-    function (err) {
-      if (err) return res.status(500).json({ message: 'Update failed' });
-      res.json({ updated: this.changes > 0 });
-    });
+  try {
+    const stmt = db.prepare(`UPDATE customers SET 
+      name = ?, address = ?, city = ?, postal_code = ?, district = ?, state = ?,
+      phone_number = ?, email = ?, contact_person = ?, customer_type = ?, customer_category = ?
+      WHERE customer_id = ?`);
+    
+    const result = stmt.run(
+      name, address, city, postal_code, district, state,
+      phone_number, email, contact_person, customer_type, customer_category, id
+    );
+
+    res.json({ updated: result.changes > 0 });
+  } catch (err) {
+    console.error('Update error:', err.message);
+    res.status(500).json({ message: 'Update failed' });
+  }
 };
 
 exports.deleteCustomer = (req, res) => {
   const id = req.params.id;
-  db.run('DELETE FROM customers WHERE customer_id = ?', [id], function (err) {
-    if (err) return res.status(500).json({ message: 'Delete failed' });
-    res.json({ deleted: this.changes > 0 });
-  });
+
+  try {
+    const stmt = db.prepare('DELETE FROM customers WHERE customer_id = ?');
+    const result = stmt.run(id);
+    res.json({ deleted: result.changes > 0 });
+  } catch (err) {
+    console.error('Delete error:', err.message);
+    res.status(500).json({ message: 'Delete failed' });
+  }
 };
 
 exports.getAllCustomers = (req, res) => {
-  db.all('SELECT * FROM customers', [], (err, rows) => {
-    if (err) return res.status(500).json({ message: 'Fetch error' });
+  try {
+    const stmt = db.prepare('SELECT * FROM customers');
+    const rows = stmt.all();
     res.json(rows);
-  });
+  } catch (err) {
+    console.error('Fetch error:', err.message);
+    res.status(500).json({ message: 'Fetch error' });
+  }
 };
