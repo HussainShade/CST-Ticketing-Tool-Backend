@@ -53,11 +53,16 @@ exports.deleteCustomer = (req, res) => {
   const id = req.params.id;
 
   try {
-    const stmt = db.prepare('DELETE FROM customers WHERE customer_id = ?');
-    const result = stmt.run(id);
+    const linkedTickets = db.prepare('SELECT COUNT(*) AS count FROM tickets WHERE customer_id = ?').get(id);
+
+    if (linkedTickets.count > 0) {
+      return res.status(400).json({ message: 'Cannot delete customer. Linked tickets exist.' });
+    }
+
+    const result = db.prepare('DELETE FROM customers WHERE customer_id = ?').run(id);
     res.json({ deleted: result.changes > 0 });
   } catch (err) {
-    console.error('Delete error:', err.message);
+    console.error('Delete customer error:', err.message);
     res.status(500).json({ message: 'Delete failed' });
   }
 };

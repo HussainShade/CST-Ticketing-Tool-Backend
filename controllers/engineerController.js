@@ -40,6 +40,12 @@ exports.deleteEngineer = (req, res) => {
   const id = req.params.id;
 
   try {
+    const linkedTickets = db.prepare('SELECT COUNT(*) AS count FROM tickets WHERE engineer_id = ?').get(id);
+
+    if (linkedTickets.count > 0) {
+      return res.status(400).json({ message: 'Cannot delete engineer. Linked tickets exist.' });
+    }
+
     const result = db.prepare('DELETE FROM service_engineers WHERE engineer_id = ?').run(id);
     res.json({ deleted: result.changes > 0 });
   } catch (err) {
