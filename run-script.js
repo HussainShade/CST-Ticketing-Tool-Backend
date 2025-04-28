@@ -29,9 +29,6 @@ try {
     // Disable foreign key constraints temporarily
     db.prepare('PRAGMA foreign_keys = OFF').run();
 
-    // Delete records in the correct order
-    // Start with the child tables first (tickets, service_engineers, customers)
-
     db.prepare('DELETE FROM tickets').run(); // Deleting from tickets first
     db.prepare('DELETE FROM service_engineers').run(); // Then service_engineers
     db.prepare('DELETE FROM customers').run(); // Finally, delete from customers
@@ -51,5 +48,5 @@ try {
     console.log('✅ All records deleted, auto-increment IDs reset, and counters refreshed successfully.');
   })();
 } catch (err) {
-  console.error('❌ Failed to clear tables and reset counters:', err.message);
+  //console.error('❌ Failed to clear tables and reset counters:', err.message);
 }
