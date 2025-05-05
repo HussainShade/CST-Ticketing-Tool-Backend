@@ -1,6 +1,6 @@
 const pool = require('../config/db'); // PostgreSQL Pool with connection string
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 exports.loginAdmin = async (req, res) => {
   const { user_id, password } = req.body;
