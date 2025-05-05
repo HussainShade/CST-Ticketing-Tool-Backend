@@ -1,12 +1,29 @@
-// run-script.js
-const db = require('./config/db'); // Adjust the path if needed
+const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+require('dotenv').config();
 
-try {
-  const rows = db.prepare('SELECT * FROM service_engineers').all();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
-  console.log('📋 All Customers:');
-  console.table(rows); // Clean tabular display in console
-} catch (err) {
-  console.error('❌ Error fetching customers:', err.message);
-  process.exit(1);
-}
+const createAdmin = async (userId, plainPassword) => {
+  try {
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+    const query = `
+      INSERT INTO admin (user_id, password)
+      VALUES ($1, $2)
+      RETURNING admin_id;
+    `;
+    const values = [userId, hashedPassword];
+    const res = await pool.query(query, values);
+    console.log(`✅ Admin created with ID: ${res.rows[0].admin_id}`);
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+  } finally {
+    await pool.end();
+  }
+};
+
+// Call function with sample values
+createAdmin('admin@caresoft.in', 'Caresoft@Gold123');

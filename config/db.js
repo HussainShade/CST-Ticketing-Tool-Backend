@@ -1,17 +1,11 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
+require('dotenv').config();
 
-// Resolve DB file path
-const dbPath = path.resolve(__dirname, '../issue_ticketing.db');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Use your Neon connection string
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
-// Connect to the SQLite DB
-let db;
-try {
-  db = new Database(dbPath);
-  console.log('SQLite connected using better-sqlite3');
-} catch (err) {
-  console.error('SQLite connection error:', err.message);
-  process.exit(1); // Exit the process if DB connection fails
-}
-
-module.exports = db;
+module.exports = pool;
