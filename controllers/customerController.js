@@ -1,4 +1,4 @@
-const pool = require('../config/db'); // PostgreSQL Pool using DATABASE_URL
+const pool = require('../config/db');
 const { generateCustomerId } = require('../utils/idGenerator');
 
 // ➕ Add Customer
