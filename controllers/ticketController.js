@@ -4,16 +4,16 @@ const { generateTicketId } = require('../utils/idGenerator');
 
 // 🧾 Create Ticket
 exports.createTicket = async (req, res) => {
-  const {
-    service_type, customer_id, product_type,
-    product_serial_number, issue_description,
-    contact_person, phone_number, customer_address, email
-  } = req.body;
-
-  const ticket_id = generateTicketId();
-  const created_on = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
-
   try {
+    const {
+      service_type, customer_id, product_type,
+      product_serial_number, issue_description,
+      contact_person, phone_number, customer_address, email
+    } = req.body;
+
+    const ticket_id = await generateTicketId(); // ✅ Await is mandatory
+    const created_on = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
+
     const sql = `
       INSERT INTO tickets (
         ticket_id, created_on, service_type, customer_id, contact_person,

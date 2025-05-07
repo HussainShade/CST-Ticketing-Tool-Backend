@@ -1,15 +1,15 @@
 const pool = require('../config/db');
 const { generateCustomerId } = require('../utils/idGenerator');
 
-// ➕ Add Customer
 exports.addCustomer = async (req, res) => {
-  const customer_id = generateCustomerId();
-  const {
-    name, address, phone_number, contact_person, email, city,
-    postal_code, district, state, customer_type, customer_category
-  } = req.body;
-
   try {
+    const customer_id = await generateCustomerId(); // ✅ await here
+
+    const {
+      name, address, phone_number, contact_person, email, city,
+      postal_code, district, state, customer_type, customer_category
+    } = req.body;
+
     const sql = `
       INSERT INTO customers (
         customer_id, name, address, city, postal_code, district, state,
@@ -30,6 +30,7 @@ exports.addCustomer = async (req, res) => {
     res.status(500).json({ message: 'Insert failed' });
   }
 };
+
 
 // ✏️ Edit Customer
 exports.editCustomer = async (req, res) => {
