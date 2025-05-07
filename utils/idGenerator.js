@@ -1,48 +1,58 @@
-const fs = require('fs');
-const path = require('path');
+const pool = require('../config/db');
 
-const counterFile = path.join(__dirname, 'counters.json');
-
-// Initialize counters file if it does not exist
-function initializeCounters() {
-  if (!fs.existsSync(counterFile)) {
-    const initialCounters = { ticket: 1, cust: 1, eng: 1 };
-    fs.writeFileSync(counterFile, JSON.stringify(initialCounters, null, 2));
+// Fetch the current counter values
+async function getCounters() {
+  const res = await pool.query('SELECT * FROM counters WHERE id = 1');
+  if (res.rows.length === 0) {
+    // If no counters exist, initialize them based on the table counts
+    await initializeCounters();
+    return { ticket_counter: 1, customer_counter: 1, engineer_counter: 1 };
   }
+  return res.rows[0];
 }
 
-// Read counters from the file
-function readCounters() {
-  initializeCounters();
-  const data = fs.readFileSync(counterFile, 'utf-8');
-  return JSON.parse(data);
+// Initialize counters based on the number of records in the corresponding tables
+async function initializeCounters() {
+  const customerCount = await pool.query('SELECT COUNT(*) FROM customers');
+  const engineerCount = await pool.query('SELECT COUNT(*) FROM service_engineers');
+  const ticketCount = await pool.query('SELECT COUNT(*) FROM tickets');
+
+  const initialTicketCounter = parseInt(ticketCount.rows[0].count) + 1;
+  const initialCustomerCounter = parseInt(customerCount.rows[0].count) + 1;
+  const initialEngineerCounter = parseInt(engineerCount.rows[0].count) + 1;
+
+  // Insert initial values into counters table
+  await pool.query(
+    'INSERT INTO counters (ticket_counter, customer_counter, engineer_counter) VALUES ($1, $2, $3)',
+    [initialTicketCounter, initialCustomerCounter, initialEngineerCounter]
+  );
 }
 
-// Write updated counters back to the file
-function writeCounters(counters) {
-  fs.writeFileSync(counterFile, JSON.stringify(counters, null, 2));
+// Update counters in the database after generating a new ID
+async function updateCounters(ticketCounter, customerCounter, engineerCounter) {
+  await pool.query(
+    'UPDATE counters SET ticket_counter = $1, customer_counter = $2, engineer_counter = $3 WHERE id = 1',
+    [ticketCounter, customerCounter, engineerCounter]
+  );
 }
 
-exports.generateTicketId = () => {
-  const counters = readCounters();
-  const id = `CST${String(counters.ticket).padStart(4, '0')}`;
-  counters.ticket += 1;
-  writeCounters(counters);
+exports.generateTicketId = async () => {
+  const counters = await getCounters();
+  const id = `CST${String(counters.ticket_counter).padStart(4, '0')}`;
+  await updateCounters(counters.ticket_counter + 1, counters.customer_counter, counters.engineer_counter);
   return id;
 };
 
-exports.generateCustomerId = () => {
-  const counters = readCounters();
-  const id = `CUST${String(counters.cust).padStart(4, '0')}`;
-  counters.cust += 1;
-  writeCounters(counters);
+exports.generateCustomerId = async () => {
+  const counters = await getCounters();
+  const id = `CUST${String(counters.customer_counter).padStart(4, '0')}`;
+  await updateCounters(counters.ticket_counter, counters.customer_counter + 1, counters.engineer_counter);
   return id;
 };
 
-exports.generateEngineerId = () => {
-  const counters = readCounters();
-  const id = `ENG${String(counters.eng).padStart(4, '0')}`;
-  counters.eng += 1;
-  writeCounters(counters);
+exports.generateEngineerId = async () => {
+  const counters = await getCounters();
+  const id = `ENG${String(counters.engineer_counter).padStart(4, '0')}`;
+  await updateCounters(counters.ticket_counter, counters.customer_counter, counters.engineer_counter + 1);
   return id;
 };
