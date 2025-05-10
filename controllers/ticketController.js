@@ -11,8 +11,10 @@ exports.createTicket = async (req, res) => {
       contact_person, phone_number, customer_address, email
     } = req.body;
 
-    const ticket_id = await generateTicketId(); // ✅ Await is mandatory
+    const ticket_id = await generateTicketId();
     const created_on = moment().tz('Asia/Kolkata').format('YYYY-MM-DD HH:mm:ss');
+
+    const serialNumber = product_serial_number?.trim() || 'NO SERIAL NUMBER';
 
     const sql = `
       INSERT INTO tickets (
@@ -24,7 +26,7 @@ exports.createTicket = async (req, res) => {
 
     await pool.query(sql, [
       ticket_id, created_on, service_type, customer_id, contact_person,
-      phone_number, customer_address, product_type, product_serial_number,
+      phone_number, customer_address, product_type, serialNumber,
       email, issue_description
     ]);
 
@@ -38,19 +40,28 @@ exports.createTicket = async (req, res) => {
 // ✏️ Edit Ticket
 exports.editTicket = async (req, res) => {
   const { ticketId } = req.params;
-  const { status, engineer_id, resolution_summary, resolved_date } = req.body;
+  const {
+    status, engineer_id, resolution_summary,
+    resolved_date, product_serial_number
+  } = req.body;
 
   try {
-    const sql = `
-      UPDATE tickets SET
-        status = $1, engineer_id = $2, resolution_summary = $3, resolved_on = $4
-      WHERE ticket_id = $5
-    `;
-
     const resolvedOnValue = status === 'Closed' ? resolved_date : null;
 
+    const sql = `
+      UPDATE tickets SET
+        status = $1,
+        engineer_id = $2,
+        resolution_summary = $3,
+        resolved_on = $4,
+        product_serial_number = $5
+      WHERE ticket_id = $6
+    `;
+
+    const serialNumber = product_serial_number?.trim() || 'NO SERIAL NUMBER';
+
     const result = await pool.query(sql, [
-      status, engineer_id, resolution_summary, resolvedOnValue, ticketId
+      status, engineer_id, resolution_summary, resolvedOnValue, serialNumber, ticketId
     ]);
 
     res.json({ updated: result.rowCount > 0 });
