@@ -38,14 +38,23 @@ async function updateCounters(ticketCounter, customerCounter, engineerCounter) {
 
 exports.generateTicketId = async () => {
   const counters = await getCounters();
-  const id = `CST${String(counters.ticket_counter).padStart(4, '0')}`;
+
+  const currentYear = new Date().getFullYear() % 100; // Last two digits
+  const nextYear = (currentYear + 1) % 100;
+
+  const yearRange = `${String(currentYear).padStart(2, '0')}-${String(nextYear).padStart(2, '0')}`;
+  const ticketNumber = String(counters.ticket_counter).padStart(4, '0');
+
+  const id = `CST/${yearRange}/${ticketNumber}`;
+
   await updateCounters(counters.ticket_counter + 1, counters.customer_counter, counters.engineer_counter);
   return id;
 };
 
+
 exports.generateCustomerId = async () => {
   const counters = await getCounters();
-  const id = `CUST${String(counters.customer_counter).padStart(4, '0')}`;
+  const id = `CUS${String(counters.customer_counter).padStart(4, '0')}`;
   await updateCounters(counters.ticket_counter, counters.customer_counter + 1, counters.engineer_counter);
   return id;
 };
