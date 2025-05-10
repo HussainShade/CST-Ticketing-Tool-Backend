@@ -42,10 +42,10 @@ exports.generateTicketId = async () => {
   const currentYear = new Date().getFullYear() % 100; // Last two digits
   const nextYear = (currentYear + 1) % 100;
 
-  const yearRange = `${String(currentYear).padStart(2, '0')}-${String(nextYear).padStart(2, '0')}`;
+  const yearRange = `${String(currentYear).padStart(2, '0')}_${String(nextYear).padStart(2, '0')}`;
   const ticketNumber = String(counters.ticket_counter).padStart(4, '0');
 
-  const id = `CST/${yearRange}/${ticketNumber}`;
+  const id = `CST_${yearRange}_${ticketNumber}`;
 
   await updateCounters(counters.ticket_counter + 1, counters.customer_counter, counters.engineer_counter);
   return id;
